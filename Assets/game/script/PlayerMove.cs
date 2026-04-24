@@ -75,7 +75,16 @@ public class PlayerMove : MonoBehaviour
     private void OnMovePerformed(InputAction.CallbackContext ctx)
     {
         Vector2 v = ctx.ReadValue<Vector2>();
-        _moveInput = new Vector3(v.x, 0, v.y).normalized;
+        
+        Vector3 forward = Camera.main.transform.forward;
+        Vector3 right = Camera.main.transform.right;
+        
+        forward.y = 0f;
+        right.y = 0f;
+        forward.Normalize();
+        right.Normalize();
+        
+        _moveInput = (forward * v.y + right * v.x).normalized;
     }
 
     private void OnMoveCanceled(InputAction.CallbackContext ctx)
