@@ -18,15 +18,24 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float _collisionRadius = 0.3f;
     [SerializeField] private LayerMask _collisionMask;
 
+    [SerializeField] private float _minZoomDistance = 2f;
+    [SerializeField] private float _maxZoomDistance = 10f;
+    [SerializeField] private float _zoomSpeed = 2f;
+    
+
     private InputSystem_Actions _input;
     private Vector2 _lookInput;
     
     private float _yaw = 0f;
     private float _pitch = 0f;
 
+    private float _currentZoomDistance;
+    private float _zoomInput;
+
     void Awake()
     {
         _input = new InputSystem_Actions();
+        _currentZoomDistance = _offset.magnitude;
     }
 
     void OnEnable()
@@ -34,6 +43,9 @@ public class CameraFollow : MonoBehaviour
         _input.Enable();
         _input.Player.Look.performed += OnLook;
         _input.Player.Look.canceled += OnLook;
+        
+        _input.Player.Zoom.performed += OnZoom;
+        _input.Player.Zoom.canceled += OnZoom;
     }
 
     void OnDisable()
@@ -47,7 +59,11 @@ public class CameraFollow : MonoBehaviour
     {
         _lookInput = ctx.ReadValue<Vector2>();
     }
-    
+
+    private void OnZoom(InputAction.CallbackContext ctx)
+    {
+        _zoomInput = ctx.ReadValue<float>();
+    }
     private void LateUpdate()
     {
         if (_target == null) return;
@@ -61,8 +77,11 @@ public class CameraFollow : MonoBehaviour
         
         Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
         
-        
-        Vector3 desiredPosition = _target.position + rotation * _offset;
+        _currentZoomDistance -= _zoomInput * _zoomSpeed;
+        _zoomInput = 0f;
+        _currentZoomDistance = Mathf.Clamp(_currentZoomDistance, _minZoomDistance, _maxZoomDistance);
+        Vector3 offserDir = _offset.normalized;
+        Vector3 desiredPosition = _target.position + rotation * _offset * _currentZoomDistance;
         
         Vector3 direction = (desiredPosition - _target.position).normalized;
         float distance = Vector3.Distance(_target.position, desiredPosition);
