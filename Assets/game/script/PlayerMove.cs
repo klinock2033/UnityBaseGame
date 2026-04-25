@@ -23,12 +23,23 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private Transform _groundCheckZone;
     [SerializeField] private LayerMask _groundMask;
     [SerializeField] private float _groundDistance = 0.2f;
+
+    [Header("rotation")] 
+    [SerializeField] private float _rotationSpeed = 10f;
+    [SerializeField] private Transform _cameraTransform;
     
     
+    private Vector2 _inputVector;
 
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
+        
+        if (_cameraTransform == null)
+        {
+            _cameraTransform = Camera.main.transform;
+        }
+        
         if (_rb == null)
         {
             Debug.LogError("Rigidbody missing!");
@@ -56,7 +67,32 @@ public class PlayerMove : MonoBehaviour
         
         
     }
+    void Update()
+    {
+        if (IsGrounded())
+        {
+            _coyoteTimeCounter = _coyoteTime;
+        }
+        else
+        {
+            if (_coyoteTimeCounter > 0f)
+            {
+                _coyoteTimeCounter -= Time.deltaTime;
+            }
+            
+        }
 
+        if (_blockJumpTimer > 0f)
+        {
+            _blockJumpTimer -= Time.deltaTime;
+        }
+    }
+    void FixedUpdate()
+    {
+        Move();
+        Rotate();
+    }
+    
     void OnEnable()
     {
         _input.Enable();
@@ -72,24 +108,35 @@ public class PlayerMove : MonoBehaviour
         _input.Disable();
     }
 
-    private void OnMovePerformed(InputAction.CallbackContext ctx)
+    void Move()
     {
-        Vector2 v = ctx.ReadValue<Vector2>();
-        
-        Vector3 forward = Camera.main.transform.forward;
-        Vector3 right = Camera.main.transform.right;
-        
-        forward.y = 0f;
-        right.y = 0f;
+        _rb.MovePosition(_rb.position + _moveInput * moveSpeed * Time.fixedDeltaTime);
+        Vector3 forward = _cameraTransform.forward;
+        Vector3 right = _cameraTransform.right;
+        forward.y = 0;
+        right.y = 0;
         forward.Normalize();
         right.Normalize();
         
-        _moveInput = (forward * v.y + right * v.x).normalized;
+        _moveInput = (forward * _inputVector.y + right * _inputVector.x).normalized;
+    }
+
+    void Rotate()
+    {
+        if(_moveInput == Vector3.zero) return;
+        Quaternion targetRotation = Quaternion.LookRotation(_moveInput.normalized);
+        Quaternion smoothRotation = Quaternion.Slerp(_rb.rotation, targetRotation,  _rotationSpeed * Time.fixedDeltaTime);
+        
+        _rb.MoveRotation(smoothRotation);
+    }
+    private void OnMovePerformed(InputAction.CallbackContext ctx)
+    {
+        _inputVector = ctx.ReadValue<Vector2>();
     }
 
     private void OnMoveCanceled(InputAction.CallbackContext ctx)
     {
-        _moveInput = Vector3.zero;
+        _inputVector = Vector2.zero;
     }
 
     private void OnJumpPerformed(InputAction.CallbackContext ctx)
@@ -118,28 +165,5 @@ public class PlayerMove : MonoBehaviour
         Gizmos.DrawWireSphere(_groundCheckZone.position, _groundDistance);
     }
 
-    void Update()
-    {
-        if (IsGrounded())
-        {
-            _coyoteTimeCounter = _coyoteTime;
-        }
-        else
-        {
-            if (_coyoteTimeCounter > 0f)
-            {
-                _coyoteTimeCounter -= Time.deltaTime;
-            }
-            
-        }
 
-        if (_blockJumpTimer > 0f)
-        {
-            _blockJumpTimer -= Time.deltaTime;
-        }
-    }
-    void FixedUpdate()
-    {
-        _rb.MovePosition(_rb.position + _moveInput * moveSpeed * Time.fixedDeltaTime);
-    }
 }

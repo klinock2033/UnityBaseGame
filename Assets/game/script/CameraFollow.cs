@@ -7,7 +7,13 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private Transform _target;
     [SerializeField] private Vector3 _offset = new Vector3(0f, 5f, -8f);
     [SerializeField] private float _smoothSpeed = 5f;
+    [Range(0f, 2f)]
     [SerializeField] private float _mouseSensitivity = 10f;
+    
+    [Range(-90, 0)]
+    [SerializeField] private float _minPitch = -30f;
+    [Range(0, 90)]
+    [SerializeField] private float _maxPitch = 30f;
 
     private InputSystem_Actions _input;
     private Vector2 _lookInput;
@@ -48,7 +54,7 @@ public class CameraFollow : MonoBehaviour
         _pitch -= _lookInput.y * _mouseSensitivity;
         
         //limit pitch
-        _pitch = Mathf.Clamp(_pitch, -90f, 90f);
+        _pitch = Mathf.Clamp(_pitch, _minPitch, _maxPitch);
         
         Quaternion rotation = Quaternion.Euler(_pitch, _yaw, 0f);
         
