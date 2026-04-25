@@ -30,7 +30,16 @@ public class PlayerMove : MonoBehaviour
     
     
     private Vector2 _inputVector;
-
+    private PlayerState _currentState;
+    public enum  PlayerState
+    {
+        Idle,
+        Move,
+        Jump,
+        Fall
+    }
+    
+    
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
@@ -69,6 +78,8 @@ public class PlayerMove : MonoBehaviour
     }
     void Update()
     {
+        UpdateState();
+        DebugInfo();
         if (IsGrounded())
         {
             _coyoteTimeCounter = _coyoteTime;
@@ -158,6 +169,21 @@ public class PlayerMove : MonoBehaviour
         
     }
 
+    void UpdateState()
+    {
+        if (!IsGrounded())
+        {
+            _currentState = _rb.linearVelocity.y > 0f ? PlayerState.Jump : PlayerState.Fall;
+            return;
+        }
+        
+        _currentState = _moveInput.magnitude > 0.1f ? PlayerState.Move : PlayerState.Idle;
+    }
+
+    void DebugInfo()
+    {
+        Debug.Log(_currentState.ToString());
+    }
     void OnDrawGizmos()
     {
         if (_groundCheckZone ==  null) return;
