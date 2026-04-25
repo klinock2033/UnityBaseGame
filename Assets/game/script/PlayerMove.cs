@@ -28,6 +28,9 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private float _rotationSpeed = 10f;
     [SerializeField] private Transform _cameraTransform;
     
+    [Header("Animation")]
+    [SerializeField] private Animator _animator;
+    
     
     private Vector2 _inputVector;
     private PlayerState _currentState;
@@ -43,7 +46,7 @@ public class PlayerMove : MonoBehaviour
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-        
+        _animator = GetComponent<Animator>();
         if (_cameraTransform == null)
         {
             _cameraTransform = Camera.main.transform;
@@ -79,6 +82,7 @@ public class PlayerMove : MonoBehaviour
     void Update()
     {
         UpdateState();
+        UpdateAnimator();
         DebugInfo();
         if (IsGrounded())
         {
@@ -178,6 +182,17 @@ public class PlayerMove : MonoBehaviour
         }
         
         _currentState = _moveInput.magnitude > 0.1f ? PlayerState.Move : PlayerState.Idle;
+    }
+
+    void UpdateAnimator()
+    {
+        float speed = _moveInput.magnitude;
+        bool grounded = IsGrounded();
+        float verticalVel =  _rb.linearVelocity.y;
+        
+        _animator.SetFloat("VerticalVelocity", verticalVel);
+        _animator.SetBool("IsGrounded", grounded);
+        _animator.SetFloat("Speed", speed);
     }
 
     void DebugInfo()
