@@ -14,6 +14,9 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float _minPitch = -30f;
     [Range(0, 90)]
     [SerializeField] private float _maxPitch = 30f;
+    
+    [SerializeField] private float _collisionRadius = 0.3f;
+    [SerializeField] private LayerMask _collisionMask;
 
     private InputSystem_Actions _input;
     private Vector2 _lookInput;
@@ -60,8 +63,18 @@ public class CameraFollow : MonoBehaviour
         
         
         Vector3 desiredPosition = _target.position + rotation * _offset;
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.deltaTime);
         
+        Vector3 direction = (desiredPosition - _target.position).normalized;
+        float distance = Vector3.Distance(_target.position, desiredPosition);
+        Debug.DrawRay(_target.position, direction * distance, Color.red);
+        
+        if (Physics.SphereCast(_target.position, _collisionRadius, direction, out RaycastHit hit, distance,
+                _collisionMask))
+        {
+            desiredPosition = _target.position + direction * (hit.distance - 0.1f);
+        }
+        
+        transform.position = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.deltaTime);
         transform.LookAt(_target);
         
     }
